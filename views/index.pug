@@ -1,0 +1,47 @@
+doctype html
+html
+  include includes/head.pug
+
+  body
+    include includes/header.pug
+    div.container
+    
+      // Greeting
+      div.row.col.s12
+        span.hide#user #{user}
+        h1#givenName Hallo !
+        
+      // Admin button
+      div.row.col.s12
+        a.waves-effect.waves-light.btn(href='/admin') Admin
+        
+      // Logout button
+      div.row.col.s12
+        a.waves-effect.waves-light.btn(href='/logout') Logout
+
+      // Add button
+      div.row.col.s12
+        a.waves-effect.waves-light.btn#add Add 
+        
+      // Delete button
+      div.row.col.s12
+        a.waves-effect.waves-light.btn#delete Delete 
+      
+      // Search bar
+      div.row
+        div.input-field.col.s6.s12.red-text
+          i.red-text.material-icons.prefix search
+          input.autocomplete-input.autocomplete.red-text#search(type='text', placeholder='search')
+
+        
+      div.row.col.s12
+        span#userObject
+        br
+        br
+        span#userObjectString
+
+    <!--JavaScript at end of body for optimized loading-->
+    script(type='text/javascript', src='js/materialize.min.js')
+    script(src='/socket.io/socket.io.js')
+    script(src='https://code.jquery.com/jquery-1.11.1.js')
+    script(type='text/javascript', src='js/index.js')

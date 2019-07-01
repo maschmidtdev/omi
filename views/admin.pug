@@ -1,0 +1,53 @@
+doctype html
+html
+  include includes/head.pug
+
+  body
+    include includes/header.pug
+    
+    // Main Row
+    div.row
+    
+      // Menu Col
+      div.col.s2
+        div.menu
+          ul.side-nav.fixed#slide-out
+            li.active
+              i.material-icons.small web
+              a(href="admin") Dashboard
+            li
+              i.material-icons.small group
+              a(href="users") Users
+            li
+              i.material-icons.small local_offer
+              a(href="roles") Roles
+        
+        
+      // Content Col
+      div.col.s10
+        // Greeting
+        div.row.col.s12
+          span.hide#user #{user}
+          h4#givenName Hallo !
+          
+        // Index button
+        div.row.col.s12
+          a.waves-effect.waves-light.btn(href='/index') Index
+          
+        // Logout button
+        div.row.col.s12
+          a.waves-effect.waves-light.btn(href='/logout') Logout
+        
+        // Search bar
+        div.row
+          div.input-field.col.s6.s12.red-text
+            i.red-text.material-icons.prefix search
+            input.autocomplete-input.autocomplete.red-text#search(type='text', placeholder='search')
+
+
+
+    <!--JavaScript at end of body for optimized loading-->
+    script(type='text/javascript', src='js/materialize.min.js')
+    script(src='/socket.io/socket.io.js')
+    script(src='https://code.jquery.com/jquery-1.11.1.js')
+    script(type='text/javascript', src='js/admin.js')

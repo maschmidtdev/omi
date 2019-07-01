@@ -1,0 +1,36 @@
+doctype html
+html
+  include includes/head.pug
+
+  body
+    div.valign-wrapper.row.login-box
+
+      div.col.card.hoverable.s10.pull-s1.m6.pull-m3.l4.pull-l4
+
+        form(method='POST', action='/')
+
+          div.card-content
+            span.card-title Onboarding Management Interface - Login
+            div.row
+
+              div.input-field.col.s12
+                label(for='user') Benutzer
+                input(type='text', class='validate', name='user', id='user')
+                
+
+              div.input-field.col.s12
+                label(for='password') Passwort
+                input(type='password', class='validate', name='password', id='password')
+
+          div.card-action.right-align
+            input.btn-flat.grey-text.waves-effect#reset(type='reset')
+            input.btn.green.waves-effect.waves-light(type='submit', value='Login')
+
+
+
+
+    <!--JavaScript at end of body for optimized loading-->
+    script(type='text/javascript', src='../js/materialize.min.js')
+    script(src='/socket.io/socket.io.js')
+    script(src='https://code.jquery.com/jquery-1.11.1.js')
+    script(type='text/javascript', src='../js/login.js')
