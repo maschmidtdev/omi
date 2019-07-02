@@ -26,9 +26,28 @@ html
       // Content Col
       div.col.s9
         // Greeting
-        div.row.col.s12
-          span.hide#user #{user}
-          h4#givenName Hallo !
+        div.row
+          div.col.s12
+            span.hide#user #{user}
+            h4#givenName Hallo !
+        
+        div.row
+          div.input-field.col.s6.offset-s1
+            // Role name field
+            input#roleName(type="text", placeholder="New Role")
+            
+          div.col.s2.center-align
+            // Add Button
+            a.btn-floating.btn-large.waves-effect.waves-light.btn#addNewRole
+              i.material-icons add
+        
+        // Role List Row
+        div.row
+          // Role Data Col
+          ul.collection.with-header.col.s7.offset-s1#role-list
+            li.collection-header 
+              h6.center-align Roles
+            
 
     <!--JavaScript at end of body for optimized loading-->
     script(type='text/javascript', src='js/materialize.min.js')

@@ -41,3 +41,7 @@ ul li.card {
   margin: 4px 0;
   padding: 15px 0;
 }
+
+.delete {
+  cursor: pointer;
+}

@@ -9,12 +9,13 @@ const uuid        = require('uuid/v4'); // Random strings
 const session     = require('client-sessions');
 const bodyParser  = require('body-parser');
 const mariadb     = require('mariadb');
-var pool          = null; // Saving db connection later by db.conf
 
 
 // ===========================================
 // ============= Database Config =============
 // ===========================================
+
+var pool = null; // Saving db connection later by db.conf
 fs.access("db.conf", fs.constants.F_OK, err => {
   if(err){
     console.log(err);
@@ -49,8 +50,6 @@ fs.access("db.conf", fs.constants.F_OK, err => {
     });
   }
 });
-
-
 
 
 // ===========================================
@@ -283,6 +282,35 @@ io.on('connection', function(socket){
     });
   });
 
+  socket.on('get_db_roles', () => {
+
+    var query = "SELECT * FROM roles;"
+
+    genericQuery(query, (result) => {
+      console.log(result);
+      socket.emit('db_roles', {result: result});
+    });
+  });
+
+  socket.on('add_role', (data) => {
+
+    var new_role = data.role;
+    var query = "INSERT INTO roles (role_name) VALUES ('"+new_role+"');";
+
+    genericQuery(query, (result) => {
+      socket.emit('db_role_added', {role: new_role});
+    });
+  });
+
+  socket.on('delete_role', (data) => {
+
+    var query = "DELETE FROM roles WHERE role_name ='"+data.role+"';";
+
+    genericQuery(query, (result) => {
+      socket.emit('db_role_deleted', {role: data.role});
+    });
+  });
+
 });
 
 
@@ -414,6 +442,31 @@ deleteAdUser = function(dn, socket){
 // ================ Queries  =================
 // ===========================================
 
+genericQuery = function(query, cb){
+
+  pool.getConnection().then(conn => {
+
+    conn.query(query).then((rows) => {
+      console.log(rows);
+      cb(rows); // Callback: redirect to /index
+      conn.end();
+    })
+    // .then((res) => {
+    //   console.log('res:');
+    //   console.log(res);
+    // })
+    .catch(err => {
+      // Handle error
+      console.log('error');
+      console.log(err);
+      conn.end();
+    })
+
+  }).catch(err => {
+    console.log('db error: ' + err);
+  });
+}
+
 loginQuery = function(username, cb){
 
   var query = "SELECT * FROM users WHERE username = '" + username + "';";
@@ -469,6 +522,8 @@ usersQuery = function(cb){
   });
 
 }
+
+
 
 
 // ===========================================
