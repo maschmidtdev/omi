@@ -222,7 +222,7 @@ io.on('connection', function(socket){
     sendAdUserObject(data.user + '@ors.local', socket);
   });
 
-  socket.on('ldap_add', () => {
+  socket.on('ldap_add_user', () => {
 
     var newDN = "CN=omi test,OU=Admins,OU=Orendt Studios Holding,DC=ORS,DC=local";
     var newUser = {
@@ -266,13 +266,64 @@ io.on('connection', function(socket){
 
   });
 
-  socket.on('ldap_delete', (data) => {
+  socket.on('ldap_new_user_check', (data) => {
+
+    searchADUser(data.username+'@ors.local', socket, (result) => {
+      if(result.status === 'user found'){
+        // Create new DB user
+        var query = "INSERT INTO users (username, role, email) VALUES ('"+data.username+"', '"+data.role+"', '"+data.username+"@orendtstudios.com');";
+
+        genericQuery(query, (result) => {
+          socket.emit('db_user_added');
+        });
+
+      } else if (result.status === 'user not found'){
+        socket.emit('alertmessage', {msg: 'Dieser User existiert nicht im AD!'});
+
+        // Add code for creating new AD user later
+
+        // admin_client.bind(userPrincipalName, password, function(err){
+        //   if(err){
+        //     console.log('ERROR: ' + err);
+        //     return;
+        //   } else {
+        //     console.log('Admin Authenticated!');
+        //     admin_client.add(newDN, newUser, (err) => {
+        //       if(err){
+        //         console.log('ERROR: ' + err);
+        //         socket.emit('alertmessage', {msg: 'Error: ' + JSON.stringify(err, undefined, 1)});
+        //         admin_client.unbind(); // Unbind to not get ECONNRESET error
+        //       } else {
+        //         console.log('Success: Created user ' + newUser['sAMAccountName'] + '!');
+        //         socket.emit('alertmessage', {msg: 'Success: Created user ' + newUser['sAMAccountName']});
+        //         admin_client.unbind(); // Unbind to not get ECONNRESET error
+        //       }
+        //     });
+        //   }
+        // });
+
+
+      }
+    });
+
+
+
+  });
+
+  socket.on('ldap_delete_user', (data) => {
     var dn = data.dn; // distinguishedName
     deleteAdUser(dn, socket);
   });
 
-  socket.on('ldap_search', (data) => {
-    searchADUser(data.search + '@ors.local', socket);
+  socket.on('ldap_search_user', (data) => {
+
+    searchADUser(data.search + '@ors.local', socket, (result) => {
+      if(result.status === 'user found'){
+        socket.emit('ldap_user_search_result', {object: result.object});
+      } else if (result.status === 'user not found'){
+        socket.emit('alertmessage', {msg: 'user not found'});
+      }
+    });
   });
 
   socket.on('get_db_users', () => {
@@ -309,6 +360,16 @@ io.on('connection', function(socket){
     genericQuery(query, (result) => {
       socket.emit('db_role_deleted', {role: data.role});
     });
+  });
+
+  socket.on('db_delete_user', (data) => {
+
+    var query = "DELETE FROM users WHERE username = '"+data.username+"';";
+
+    genericQuery(query, (result) => {
+      socket.emit('db_user_deleted');
+    });
+
   });
 
 });
@@ -362,7 +423,7 @@ sendAdUserObject = function(upn, socket) {
   });
 }
 
-searchADUser = function(upn, socket) {
+searchADUser = function(upn, socket, cb) {
 	var searchOptions = {
 	    scope: 'sub',
 	    filter: `(userPrincipalName=${upn})`
@@ -394,15 +455,13 @@ searchADUser = function(upn, socket) {
           socket.emit('alertmessage', {msg: err.message});
       	});
       	res.on('end', result => {
-      		console.log('result: ' + result);
-
           // Here we check if the suer we searched for matches the last saved user entry from the 'searchEntry' event
           // But first we check if we had saved any object at all so far:
           if(last_entry.object && upn === last_entry.object.sAMAccountName + '@ors.local'){
-        		console.log('entry: ' + JSON.stringify(last_entry.object, undefined, 1));
-            socket.emit('search_result', {result: last_entry.object});
+        		console.log('entry: ' + JSON.stringify(last_entry.object, undefined, 1));;
+            cb({status: 'user found', object: last_entry.object})
           } else {
-            socket.emit('alertmessage', {msg: 'User konnte nicht gefunden werden!'});
+            cb({status: 'user not found'});
           }
 
           admin_client.unbind(); // Unbind to not get ECONNRESET error

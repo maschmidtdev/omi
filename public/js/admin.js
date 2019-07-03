@@ -15,8 +15,8 @@ socket.on('ad_user_object', (data) => {
   $('#userObjectString').text(data.userObjectString);
 });
 
-socket.on('search_result', (data) => {
-  alert(JSON.stringify(data.result, undefined, 1));
+socket.on('ldap_user_search_result', (data) => {
+  alert(JSON.stringify(data.object, undefined, 1));
 });
 
 socket.on('alertmessage', (data) => {
@@ -32,7 +32,7 @@ socket.on('alertmessage', (data) => {
 $('#search').keypress((event) => {
   var keycode = (event.keyCode ? event.keyCode : event.which);
   if(keycode == '13'){ // Enter/Return key
-    socket.emit('ldap_search', {search: $('#search').val()});
+    socket.emit('ldap_search_user', {search: $('#search').val()});
   }
 });
 

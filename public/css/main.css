@@ -37,6 +37,7 @@ ul .material-icons {
   width: 20%;
 }
 
+
 ul li.card {
   margin: 4px 0;
   padding: 15px 0;
@@ -44,4 +45,8 @@ ul li.card {
 
 .delete {
   cursor: pointer;
+}
+
+.inline-block {
+  display: inline-block;
 }

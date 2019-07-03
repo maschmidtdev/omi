@@ -15,8 +15,8 @@ socket.on('ad_user_object', (data) => {
   $('#userObjectString').text(data.userObjectString);
 });
 
-socket.on('search_result', (data) => {
-  alert(JSON.stringify(data.result, undefined, 1));
+socket.on('ldap_user_search_result', (data) => {
+  alert(JSON.stringify(data.object, undefined, 1));
 });
 
 socket.on('alertmessage', (data) => {
@@ -30,19 +30,19 @@ socket.on('alertmessage', (data) => {
 
 // Create new AD User
 $("#add").on("click", () => {
-  socket.emit('ldap_add');
+  socket.emit('ldap_add_user');
 });
 
 // Delete AD User
 $("#delete").on("click", () => {
-  socket.emit('ldap_delete', {dn: "CN=omi test,OU=Admins,OU=Orendt Studios Holding,DC=ORS,DC=local"});
+  socket.emit('ldap_delete_user', {dn: "CN=omi test,OU=Admins,OU=Orendt Studios Holding,DC=ORS,DC=local"});
 });
 
 //
 $('#search').keypress((event) => {
   var keycode = (event.keyCode ? event.keyCode : event.which);
   if(keycode == '13'){ // Enter/Return key
-    socket.emit('ldap_search', {search: $('#search').val()});
+    socket.emit('ldap_search_user', {search: $('#search').val()});
   }
 });
 
