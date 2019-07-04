@@ -43,10 +43,18 @@ ul li.card {
   padding: 15px 0;
 }
 
-.delete {
+.delete, .show-user {
   cursor: pointer;
 }
 
 .inline-block {
   display: inline-block;
+}
+
+.thick, li.collection-header * {
+  font-weight: bold;
+}
+
+span.secondary-content {
+  color: black;
 }

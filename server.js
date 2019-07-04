@@ -16,6 +16,7 @@ const mariadb     = require('mariadb');
 // ===========================================
 
 var pool = null; // Saving db connection later by db.conf
+
 fs.access("db.conf", fs.constants.F_OK, err => {
   if(err){
     console.log(err);
@@ -83,12 +84,18 @@ const adSuffix = "dc=ors,dc=local"; // ors.local
 var userPrincipalName = null; // Set later by auth.conf
 var password = null; // Set later by auth.conf
 
-// Create the admin client
-const admin_client = ldap.createClient({
+const ldap_client_setting = {
   url: `ldap://${server}`,
-  connectTimeout: 0, // Milliseconds client should wait before timing out on TCP connections (Default: OS default)
+  //connectTimeout: 0, // Milliseconds client should wait before timing out on TCP connections (Default: OS default)
   reconnect: true
-});
+}
+
+
+// Create the admin client
+const admin_client = ldap.createClient(ldap_client_setting);
+
+
+
 
 // Check if auth.txt exists
 fs.access("auth.conf", fs.constants.F_OK, err => {
@@ -154,11 +161,13 @@ app.post('/', function(req, res) {
       user_client.destroy(); // probably won't be used again
 
       // Get matching mariaDB user next
-      var username = req.session.user;
-      loginQuery(username, (role) => {
-        req.session.role = role; // Assign the user's role to the session
+      var query = "SELECT * FROM users WHERE username = '" + req.session.user + "';";
+
+      genericQuery(query, (result) => {
+        req.session.role = result[0].role; // Assign the user's role to the session
         res.redirect('/admin'); // Will redirect to /index if not admin
       });
+
     }
   });
 
@@ -188,7 +197,7 @@ app.get('/admin', function(req, res){
   }
 });
 
-// Get admin page if logged in
+// Get users page if logged in
 app.get('/users', function(req, res){
   if(req.session.role == 'admin'){ // logged in as admin?
     res.render('users', {user: req.session.user});
@@ -197,7 +206,7 @@ app.get('/users', function(req, res){
   }
 });
 
-// Get admin page if logged in
+// Get roles page if logged in
 app.get('/roles', function(req, res){
   if(req.session.role == 'admin'){ // logged in as admin?
     res.render('roles', {user: req.session.user});
@@ -219,7 +228,30 @@ io.on('connection', function(socket){
   });
 
   socket.on('get_ad_user_object', (data) => {
-    sendAdUserObject(data.user + '@ors.local', socket);
+    searchADUser(data.user + '@ors.local', socket, (result) => {
+      if(result.status === 'user found'){
+        // socket.emit('ldap_user_search_result', {object: result.object});
+        socket.emit('ad_user_object', {
+          userObjectString: JSON.stringify(result.object, undefined, 1),
+          userObject: result.object,
+          username: data.user
+        });
+
+      } else if (result.status === 'user not found'){
+        socket.emit('alertmessage', {msg: 'user not found'});
+      }
+    });
+  });
+
+  socket.on('ldap_search_user', (data) => {
+
+    searchADUser(data.search + '@ors.local', socket, (result) => {
+      if(result.status === 'user found'){
+        socket.emit('ldap_user_search_result', {object: result.object});
+      } else if (result.status === 'user not found'){
+        socket.emit('alertmessage', {msg: 'user not found'});
+      }
+    });
   });
 
   socket.on('ldap_add_user', () => {
@@ -315,22 +347,15 @@ io.on('connection', function(socket){
     deleteAdUser(dn, socket);
   });
 
-  socket.on('ldap_search_user', (data) => {
-
-    searchADUser(data.search + '@ors.local', socket, (result) => {
-      if(result.status === 'user found'){
-        socket.emit('ldap_user_search_result', {object: result.object});
-      } else if (result.status === 'user not found'){
-        socket.emit('alertmessage', {msg: 'user not found'});
-      }
-    });
-  });
-
   socket.on('get_db_users', () => {
-    usersQuery((users) => {
-      console.log(users);
-      socket.emit('db_users', {users: users});
+
+    var query = "SELECT * FROM users";
+
+    genericQuery(query, (result) => {
+      console.log(result);
+      socket.emit('db_users', {users: result});
     });
+
   });
 
   socket.on('get_db_roles', () => {
@@ -379,49 +404,12 @@ io.on('connection', function(socket){
 // ============== Helper Vars  ===============
 // ===========================================
 
-var last_entry = '';
+var last_entry = ''; // Saves the last found AD user
 
 
 // ===========================================
 // =============== Functions  ================
 // ===========================================
-
-sendAdUserObject = function(upn, socket) {
-	var searchOptions = {
-	    scope: 'sub',
-	    filter: `(userPrincipalName=${upn})`
-	};
-
-  // Bind Admin first
-  admin_client.bind(userPrincipalName, password, (err) => {
-    if(err){
-      console.log('ERROR: ' + err);
-      return;
-    } else {
-      console.log('Admin Authenticated!');
-      // Perform search operation
-      admin_client.search(adSuffix, searchOptions, (err, res) => {
-      	res.on('searchEntry', entry => {
-          socket.emit('ad_user_object', {
-            userObjectString: JSON.stringify(entry.object, undefined, 1),
-            userObject: entry.object
-          });
-      	});
-      	res.on('searchReference', referral => {
-      		console.log('referral: ' + referral.uris.join());
-      	});
-      	res.on('error', err => {
-      		console.error('error: ' + err.message);
-      	});
-      	res.on('end', result => {
-      		console.log('result: ' + result);
-          admin_client.unbind(); // Prevent ECONNRESET error
-      	});
-
-      });
-    }
-  });
-}
 
 searchADUser = function(upn, socket, cb) {
 	var searchOptions = {
@@ -430,6 +418,7 @@ searchADUser = function(upn, socket, cb) {
 	};
 
   // First bind admin_client
+  var admin_client = ldap.createClient(ldap_client_setting);
   admin_client.bind(userPrincipalName, password, function(err){
     if(err){
       console.log('ERROR: ' + err);
@@ -474,6 +463,7 @@ searchADUser = function(upn, socket, cb) {
 deleteAdUser = function(dn, socket){
 
   // First bind admin_client
+  var admin_client = ldap.createClient(ldap_client_setting);
   admin_client.bind(userPrincipalName, password, function(err){
     if(err){
       console.log('ERROR: ' + err);
@@ -525,64 +515,6 @@ genericQuery = function(query, cb){
     console.log('db error: ' + err);
   });
 }
-
-loginQuery = function(username, cb){
-
-  var query = "SELECT * FROM users WHERE username = '" + username + "';";
-
-  pool.getConnection().then(conn => {
-
-    conn.query(query).then((rows) => {
-      console.log(rows);
-      cb(rows[0]['role']); // Callback: redirect to /index
-      conn.end();
-    })
-    // .then((res) => {
-    //   console.log('res:');
-    //   console.log(res);
-    // })
-    .catch(err => {
-      // Handle error
-      console.log('error');
-      console.log(err);
-      conn.end();
-    })
-
-  }).catch(err => {
-    console.log('db error: ' + err);
-  });
-
-}
-
-usersQuery = function(cb){
-
-  var query = "SELECT * FROM users";
-
-  pool.getConnection().then(conn => {
-
-    conn.query(query).then((rows) => {
-      cb(rows);
-      conn.end();
-    })
-    // .then((res) => {
-    //   console.log('res:');
-    //   console.log(res);
-    // })
-    .catch(err => {
-      // Handle error
-      console.log('error');
-      console.log(err);
-      conn.end();
-    })
-
-  }).catch(err => {
-    console.log('db error: ' + err);
-    // not connected
-  });
-
-}
-
-
 
 
 // ===========================================
