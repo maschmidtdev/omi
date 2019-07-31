@@ -4,6 +4,7 @@ var socket = io();
 var user = $('#user').text(); // Get logged-in user
 
 socket.emit('get_ad_user_object', {user: user}); // Request the AD User Object in JSON format
+$('#nav_dashboard').addClass('active');
 
 // ========== Socket handling ===========
 

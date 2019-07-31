@@ -5,29 +5,15 @@ html
   body
     include includes/header.pug
     
-    // Dropdown for user roles, invisible, populated dynamically by database
-      ul#dropdown_roles.dropdown-content
+    // Dropdown for user roles, invisible, populated dynamically with database
+    ul.dropdown-content#dropdown_roles
     
     // Main Row
     div.row
-    
-      // Menu Col
-      div.col.s2
-        div.menu
-          ul.side-nav.fixed#slide-out
-            li
-              i.material-icons.small web
-              a(href="admin") Dashboard
-            li.active
-              i.material-icons.small group
-              a(href="users") Users
-            li
-              i.material-icons.small local_offer
-              a(href="roles") Roles
-        
         
       // Content Col
-      div.col.s10
+      div.col.s10.offset-s1
+      
         // Greeting
         div.row.col.s12.offset-s1
           span.hide#user #{user}
@@ -38,13 +24,30 @@ html
           div.col.s1.center-align
             a.btn-floating.btn-medium.waves-effect.waves-light.btn#scaleNewUserForm
               i.material-icons add
+              
           // User form div
-          div.row.col.s8#userFormDiv
+          div.row.col.s8.display-none#userFormDiv
+            form.col.s12.scale-transition.scale-out#newUserForm
+              div.row
+                div.input-field.col.s6
+                  input(type="text").validate#first_name
+                  label(for="first_name") Vorname
+                div.input-field.col.s6
+                  input(type="text").validate#last_name
+                  label(for="last_name") Nachname
+              div.row
+                div.input.field.col.s5
+                  input(type="text", data-target="dropdown_roles").validate.dropdown-trigger#new_user_role
+                  label(for="new_user_role") Role
+                div.input.field.col.s4
+                  a.btn#add_new_user Add User
+                
+                
             
         // User List Row
         div.row
           // User Data Col
-          ul.collection.with-header.col.s8.offset-s1#user-list
+          ul.collection.with-header.col.s10.offset-s1#user-list
             li.collection-header 
               h6.center-align Users
       

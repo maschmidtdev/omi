@@ -1,3 +1,40 @@
 div.row
-  div.col.s12.teal.lighten-2.white-text.center-align
-    h2#title OMI - Onboarding Management Interface
+  ul.topnav
+    li#nav_dashboard
+      a(href="admin")
+        div.inline-block
+          i.material-icons.small.white-text web
+        div.inline-block Dashboard
+    li#nav_users
+      a(href="users")
+        div.inline-block
+          i.material-icons.small.white-text group
+        div.inline-block Users
+    li#nav_roles
+      a(href="roles")
+        div.inline-block
+          i.material-icons.small.white-text local_offer
+        div.inline-block.hidden Roles
+
+//          
+  nav
+    div.nav-wrapper
+      ul.left#nav-mobile
+        //ul.left.hide-on-med-and-down#nav-mobile
+        li 
+          a(href="admin")
+            div.inline-block
+              i.material-icons.small web
+            div.inline-block Dashboard
+        li 
+          a(href="users")
+            div.inline-block
+              i.material-icons.small group
+            div.inline-block Users
+        li 
+          a(href="roles") 
+            div.inline-block
+              i.material-icons.small local_offer
+            div.inline-block Roles
+            
+      a.brand-logo.right OMI - Onboarding Management Interface

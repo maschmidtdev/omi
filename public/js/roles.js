@@ -1,5 +1,7 @@
 $(document).ready(function() {
 
+$('#nav_roles').addClass('active');
+
 var socket = io();
 var user = $('#user').text(); // Get logged-in user
 

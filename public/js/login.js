@@ -1,6 +1,5 @@
 $(document).ready(function(){
 
-
 // Auto-focus on the username input
 $('#user').focus();
 
@@ -15,9 +14,6 @@ $("#reset").on("click", function() {
   $('label').removeClass('active');
   //$('#user').focus();
 });
-
-
-
 
 
 });

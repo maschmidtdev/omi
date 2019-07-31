@@ -4,6 +4,34 @@ body,
   height: 100%;
 }
 
+
+/* ----------- TOP NAV ----------- */
+
+ul.topnav a.active {
+  background-color: #ee6e73;
+}
+
+ul.topnav {
+  background-color: #26a69a;
+  margin: 0;
+}
+
+ul.topnav li {
+  display: inline-block;
+}
+
+ul.topnav li:hover, ul.topnav li.active {
+    background-color: rgba(0,0,0,0.1);
+}
+
+ul.topnav li a {
+  padding: 15px 10px;
+  color: white;
+  display: block;
+}
+
+/* ------ SIDE NAV -------  */
+
 .side-nav a {
     color: rgba(0,0,0,0.75);
     font-size: 14px;
@@ -43,18 +71,41 @@ ul li.card {
   padding: 15px 0;
 }
 
+/* --------- UNDECIDED CATEGORIES---------- */
+
 .delete, .show-user {
   cursor: pointer;
 }
 
+span.secondary-content {
+  color: black;
+}
+
+.ad-user-group:nth-child(odd) {
+  background: #dedede;
+  border-radius: 4px;
+}
+.ad-user-group:nth-child(even) {
+  background: #fafafa;
+  border-radius: 4px;
+}
+
+
+/* ---- Generic attributes ---- */
 .inline-block {
   display: inline-block;
 }
-
+.display-none {
+  display: none;
+}
+.no-margin {
+  margin: 0;
+}
 .thick, li.collection-header * {
   font-weight: bold;
 }
 
-span.secondary-content {
-  color: black;
+.no-side-padding {
+  padding-left: 0 !important;
+  padding-right: 0 !important;
 }

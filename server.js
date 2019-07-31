@@ -299,11 +299,13 @@ io.on('connection', function(socket){
   });
 
   socket.on('ldap_new_user_check', (data) => {
-
-    searchADUser(data.username+'@ors.local', socket, (result) => {
+    searchADUser(data.first_name+data.last_name+'@ors.local', socket, (result) => {
       if(result.status === 'user found'){
         // Create new DB user
-        var query = "INSERT INTO users (username, role, email) VALUES ('"+data.username+"', '"+data.role+"', '"+data.username+"@orendtstudios.com');";
+        var username = data.first_name+data.last_name;
+        var role = data.role;
+        var email = data.first_name.charAt(0)+"."+data.last_name+"@orendtstudios.com";
+        var query = "INSERT INTO users (username, role, email) VALUES ('"+username+"', '"+role+"', '"+email+"');";
 
         genericQuery(query, (result) => {
           socket.emit('db_user_added');
@@ -337,9 +339,6 @@ io.on('connection', function(socket){
 
       }
     });
-
-
-
   });
 
   socket.on('ldap_delete_user', (data) => {
@@ -397,6 +396,66 @@ io.on('connection', function(socket){
 
   });
 
+  socket.on('ldap_groups', () => {
+
+    var searchOptions = {
+  	    scope: 'sub',
+  	};
+
+    ad_groups = [];
+
+    // First bind admin_client
+    var admin_client = ldap.createClient(ldap_client_setting);
+    admin_client.bind(userPrincipalName, password, function(err){
+      if(err){
+        console.log('ERROR: ' + err);
+        return;
+      } else {
+        console.log('Admin Authenticated!');
+        // Then perform search
+        admin_client.search('ou=Gruppen, ou=Orendt, '+adSuffix, searchOptions, (err, res) => {
+          if(err){
+            console.log('Error occured while ldap search:');
+            console.log(err);
+          }
+          res.on('searchEntry', entry => {
+            // The 'searchEntry' event doesn't fire if we don't find a user, so we don't get notified if the search fails
+            // So we save the result into a helper var and check against it in another event that always fires -> 'end'
+            last_ = entry; // Found entry, save it
+            console.log('SEARCH ENTRY');
+            ad_groups.push(entry);
+            console.log(entry);
+          });
+          res.on('searchReference', referral => {
+            console.log('referral: ' + referral.uris.join());
+          });
+          res.on('error', err => {
+            console.error('error: ' + err.message);
+            socket.emit('alertmessage', {msg: err.message});
+          });
+          res.on('end', result => {
+            // Here we check if the suer we searched for matches the last saved user entry from the 'searchEntry' event
+            // But first we check if we had saved any object at all so far:
+
+            ad_groups.forEach( (e) => {
+              console.log(e.objectName);
+            })
+
+            // if(last_entry.object && upn === last_entry.object.sAMAccountName + '@ors.local'){
+            //   console.log('entry: ' + JSON.stringify(last_entry.object, undefined, 1));;
+            //   cb({status: 'user found', object: last_entry.object})
+            // } else {
+            //   cb({status: 'user not found'});
+            // }
+
+            admin_client.unbind(); // Unbind to not get ECONNRESET error
+          });
+        });
+      }
+    });
+
+  });
+
 });
 
 
@@ -405,6 +464,7 @@ io.on('connection', function(socket){
 // ===========================================
 
 var last_entry = ''; // Saves the last found AD user
+var ad_groups = ''; // Saves the last found AD groups
 
 
 // ===========================================
